@@ -1,0 +1,12 @@
+main: com.arodsg.spawnsinglemob.Main
+name: Spawn-Single-Mob
+version: 1.0
+author: arodSG
+description: Spawn only a single type of mob in the Overworld
+commands:
+   ssm:
+      description: commands for Spawn Single Mob plugin
+      usage: /ssm [enable/disable]
+      alias: [spawnsinglemob]
+      permission: spawnsinglemob.ssm
+      permission-message: You don't have the spawnsinglemob.ssm permission.
