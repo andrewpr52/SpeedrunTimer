@@ -1,12 +1,12 @@
-main: com.arodsg.hardcoretimer.Main
-name: Hardcore-Timer
+main: com.arodsg.speedruntimer.Main
+name: Speedrun-Timer
 version: 1.0
 author: arodSG
-description: Timer/Stopwatch plugin for tracking time during a hardcore run
+description: Timer/Stopwatch plugin for tracking time during a speedrun
 commands:
-   hct:
-      description: commands for Hardcore Timer plugin
-      usage: /hct [enable/disable]
-      alias: [hardcoretimer]
-      permission: hardcoretimer.hct
-      permission-message: You don't have the hardcoretimer.hct permission.
+   srt:
+      description: commands for Speedrun Timer plugin
+      usage: /srt [enable/disable]
+      aliases: [speedruntimer, timer]
+      permission: speedruntimer.srt
+      permission-message: You don't have the speedruntimer.srt permission.

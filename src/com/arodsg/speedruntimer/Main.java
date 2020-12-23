@@ -42,7 +42,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     	String commandName = command.getName();
     	
-    	if ((commandName.equalsIgnoreCase("hardcoretimer") || commandName.equalsIgnoreCase("hct")) && args.length > 0) {
+    	if ((commandName.equalsIgnoreCase("speedruntimer") || commandName.equalsIgnoreCase("srt") || commandName.equalsIgnoreCase("timer")) && args.length > 0) {
     		if(args.length > 0) {
 	    		switch(args[0]) {
 	    			case "start":
