@@ -9,7 +9,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.EnderDragon;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener, TabCompleter {
@@ -55,7 +58,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    			            	runningSeconds++;
 	    			            	
 	    			            	if(runningSeconds % 900 == 0) { // every 15 minutes
-	    			            		Bukkit.getServer().broadcastMessage("Current duration: " + convertSecondsToString(runningSeconds));
+	    			            		Bukkit.getServer().broadcastMessage("Duration: " + convertSecondsToString(runningSeconds));
 	    			            	}
 	    			            }
 	    			        }, 1000, 1000);
@@ -68,24 +71,15 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    				}
 	    				break;
 	    			case "stop":
-	    				if(isRunning) { // if running, then stop
-	    					isRunning = false;
-	    					timer.cancel();
-	    					
-	    					sender.sendMessage("Timer stopped!");
-	    					return true;
-	    				}
-	    				else { // if not running
-	    					sender.sendMessage("Error: no active timer running.");
-	    				}
-	    				break;
+	    				stopTimer(sender);
+	    				return true;
 	    			case "reset":
 	    				resetTimer();
 	    				
 	    				sender.sendMessage("Timer has been reset!");
 	    				return true;
 	    			case "time":
-	    				sender.sendMessage("Current duration: " + convertSecondsToString(runningSeconds));
+	    				sender.sendMessage("Duration: " + convertSecondsToString(runningSeconds));
 	    				return true;
 	    			case "add":
 	    				if(args.length == 3) {
@@ -170,6 +164,28 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
     	}
     	
         return false;
+    }
+    
+    @EventHandler
+    public void onEnderDragonDeath(EntityDeathEvent e) { // stop timer and broadcast time when the dragon is killed
+         if(e.getEntity() instanceof EnderDragon){
+             stopTimer(null);
+        }
+    }
+    
+    private void stopTimer(CommandSender sender) {
+    	Boolean calledFromCommand = (sender != null);
+    	
+    	if(isRunning) { // if running, then stop
+			isRunning = false;
+			timer.cancel();
+			
+			Bukkit.getServer().broadcastMessage("Timer stopped!");
+			Bukkit.getServer().broadcastMessage("Duration: " + convertSecondsToString(runningSeconds));
+		}
+		else if(calledFromCommand) { // if not running, and function was called from a command
+			sender.sendMessage("Error: no active timer running.");
+		}
     }
     
     private String convertSecondsToString(long seconds) {
