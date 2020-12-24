@@ -58,7 +58,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    			            	runningSeconds++;
 	    			            	
 	    			            	if(runningSeconds % 900 == 0) { // every 15 minutes
-	    			            		Bukkit.getServer().broadcastMessage("Duration: " + convertSecondsToString(runningSeconds));
+	    			            		broadcastRunningSeconds("Duration:");
 	    			            	}
 	    			            }
 	    			        }, 1000, 1000);
@@ -95,16 +95,13 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    					
 		    				switch(args[1]) {
 		    					case "hours":
-		    						runningSeconds += (numToAdd * 3600);
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						addSeconds(numToAdd * 3600);
 		    						return true;
 		    					case "minutes":
-		    						runningSeconds += (numToAdd * 60);
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						addSeconds(numToAdd * 60);
 		    						return true;
 		    					case "seconds":
-		    						runningSeconds += numToAdd;
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						addSeconds(numToAdd);
 		    						return true;
 		    					default:
 		    						sender.sendMessage("Error: invalid argument.");
@@ -130,19 +127,13 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    					
 		    				switch(args[1]) {
 		    					case "hours":
-		    						runningSeconds -= (numToSubtract * 3600);
-		    						runningSeconds = runningSeconds >= 0 ? runningSeconds : 0;
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						subtractSeconds(numToSubtract * 3600);
 		    						return true;
 		    					case "minutes":
-		    						runningSeconds -= (numToSubtract * 60);
-		    						runningSeconds = runningSeconds >= 0 ? runningSeconds : 0;
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						subtractSeconds(numToSubtract * 60);
 		    						return true;
 		    					case "seconds":
-		    						runningSeconds -= numToSubtract;
-		    						runningSeconds = runningSeconds >= 0 ? runningSeconds : 0;
-		    						sender.sendMessage("Time set to " + convertSecondsToString(runningSeconds));
+		    						subtractSeconds(numToSubtract);
 		    						return true;
 		    					default:
 		    						sender.sendMessage("Error: invalid argument.");
@@ -173,6 +164,17 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
         }
     }
     
+    private void addSeconds(long seconds) {
+    	runningSeconds += seconds;
+    	broadcastRunningSeconds("Time set to");
+    }
+    
+    private void subtractSeconds(long seconds) {
+    	runningSeconds -= seconds;
+		runningSeconds = runningSeconds >= 0 ? runningSeconds : 0;
+		broadcastRunningSeconds("Time set to");
+    }
+    
     private void stopTimer(CommandSender sender) {
     	Boolean calledFromCommand = (sender != null);
     	
@@ -181,11 +183,22 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 			timer.cancel();
 			
 			Bukkit.getServer().broadcastMessage("Timer stopped!");
-			Bukkit.getServer().broadcastMessage("Duration: " + convertSecondsToString(runningSeconds));
+			broadcastRunningSeconds("Duration:");
 		}
 		else if(calledFromCommand) { // if not running, and function was called from a command
 			sender.sendMessage("Error: no active timer running.");
 		}
+    }
+    
+    private void resetTimer() {
+    	isRunning = false;
+    	timer.cancel();
+    	runningSeconds = 0;
+    }
+    
+    private void broadcastRunningSeconds(String prefix) {
+    	String runningSecondsString = convertSecondsToString(runningSeconds);
+    	Bukkit.getServer().broadcastMessage(prefix + " " + runningSecondsString);
     }
     
     private String convertSecondsToString(long seconds) {
@@ -195,11 +208,5 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 			TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(seconds)),
 			TimeUnit.SECONDS.toSeconds(seconds) -
 			TimeUnit.MINUTES.toSeconds(TimeUnit.SECONDS.toMinutes(seconds)));
-    }
-    
-    private void resetTimer() {
-    	isRunning = false;
-    	timer.cancel();
-    	runningSeconds = 0;
     }
 }
