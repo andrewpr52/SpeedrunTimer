@@ -6,10 +6,11 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/andre/Documents/git/MC Plugins/BuildTools/Spigot/Spigot-API/target/spigot-api-1.16.4-R0.1-SNAPSHOT-shaded.jar">
+	<classpathentry kind="lib" path="C:/Users/andre/Documents/BuildTools/Spigot/Spigot-API/target/spigot-api-1.16.4-R0.1-SNAPSHOT-shaded.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="https://hub.spigotmc.org/javadocs/spigot/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/andre/Documents/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
