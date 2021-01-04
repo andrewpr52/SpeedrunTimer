@@ -28,6 +28,7 @@ import org.bukkit.World.Environment;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -48,9 +49,9 @@ import com.mysql.jdbc.PreparedStatement;
 
 public class Main extends JavaPlugin implements Listener, TabCompleter {
 	// databse vars
-	final String username="andrew"; // Enter in your db username
-	final String password="rjja1608"; // Enter your password for the db
-	final String url = "jdbc:mysql://localhost:3306/mc_leaderboard_placements?autoReconnect=true&useSSL=false"; // Enter URL w/db name
+	String username; // Enter in your db username
+	String password; // Enter your password for the db
+	String url; // Enter URL w/db name
 
 	// connection vars
 	static Connection connection; // This is the variable we will use to connect to database
@@ -81,6 +82,17 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	
     @Override
     public void onEnable() {
+    	getServer().getPluginManager().registerEvents(this, this);
+//    	getConfig().options().copyDefaults(false);
+//    	saveConfig();
+    	saveDefaultConfig();
+    	
+    	FileConfiguration config = this.getConfig();
+    	username = config.getString("dbInfo.username");
+    	password = config.getString("dbInfo.password");
+    	String dbName = config.getString("dbInfo.dbName");
+    	url = "jdbc:mysql://localhost:3306/" + dbName + "?autoReconnect=true&useSSL=false";
+    	
     	try { //We use a try catch to avoid errors, hopefully we don't get any.
     	    Class.forName("com.mysql.jdbc.Driver"); //this accesses Driver in jdbc.
     	}
@@ -116,11 +128,6 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
     	catch (SQLException e) { //catching errors)
     	    e.printStackTrace(); //prints out SQLException errors to the console (if any)
     	}
-    	
-    	getServer().getPluginManager().registerEvents(this, this);
-//    	getConfig().options().copyDefaults(false);
-//    	saveConfig();
-    	saveDefaultConfig();
     }
     
     @Override
@@ -324,7 +331,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 	    					List<String> leaderboardNames = Arrays.asList("overall", "blazerods", "enternether", "exitnether", "end");
 	    					
 	    					if(leaderboardNames.contains(leaderboardName)) {
-	    						printLeaderboardSql(sender, leaderboardName, false);
+	    						printLeaderboard(sender, leaderboardName, false);
 	    					}
 	    					else {
 	    						sender.sendMessage("Error: invalid leaderboard name.");
@@ -446,19 +453,19 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
     			enterNether = true;
     			enterNetherTime = convertSecondsToString(runningSeconds);
     			Bukkit.getServer().broadcastMessage("Entered the Nether at " + enterNetherTime);
-    			addToLeaderboardSql("enternether", enterNetherTime, currentRunners);
+    			addToLeaderboard("enternether", enterNetherTime, currentRunners);
     		}
     		else if(!exitNether && enterNether && foundBlazeRods && newWorldEnvironment == World.Environment.NORMAL) { // if leaving the Nether after Blaze Rods have been found
     			exitNether = true;
     			exitNetherTime = convertSecondsToString(runningSeconds);
     			Bukkit.getServer().broadcastMessage("Exited the Nether at " + exitNetherTime);
-    			addToLeaderboardSql("exitnether", exitNetherTime, currentRunners);
+    			addToLeaderboard("exitnether", exitNetherTime, currentRunners);
     		}
     		else if(!enteredEnd && newWorldEnvironment == World.Environment.THE_END) { // if entering the End for the first time
     			enteredEnd = true;
     			enteredEndTime = convertSecondsToString(runningSeconds);
     			Bukkit.getServer().broadcastMessage("Entered the End at " + enteredEndTime);
-    			addToLeaderboardSql("end", enteredEndTime, currentRunners);
+    			addToLeaderboard("end", enteredEndTime, currentRunners);
     		}
     	}
     }
@@ -472,7 +479,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
         	foundBlazeRods = true;
         	foundBlazeRodsTime = convertSecondsToString(runningSeconds);
         	Bukkit.getServer().broadcastMessage("Blaze Rod acquired at " + foundBlazeRodsTime);
-        	addToLeaderboardSql("blazerods", foundBlazeRodsTime, currentRunners);
+        	addToLeaderboard("blazerods", foundBlazeRodsTime, currentRunners);
         }
     }
     
@@ -492,7 +499,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
         if(dragonKilled) {
         	String overallTimeString = convertSecondsToString(runningSeconds);
         	
-        	addToLeaderboardSql("overall", overallTimeString, currentRunners);
+        	addToLeaderboard("overall", overallTimeString, currentRunners);
         	leaderboardTimes.put("overall", overallTimeString);
         }
         if(enterNetherTime != null) {
@@ -514,7 +521,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 					Map.Entry<String,String> entry = leaderboardTimes.entrySet().iterator().next();
 	       	 		String leaderboardName = entry.getKey();
 	       	 		
-	       	 		printLeaderboardSql(null, leaderboardName, true);
+	       	 	printLeaderboard(null, leaderboardName, true);
 	       	 		leaderboardTimes.remove(leaderboardName);
     			}
 	    			
@@ -527,62 +534,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
     	resetTimer();
     }
     
-    private void printLeaderboardConfig(CommandSender sender, String leaderboardName, String positionToHighlight) {
-    	Boolean calledFromCommand = (sender != null);
-    	String fullLeaderboardString;
-    	
-    	switch(leaderboardName) {
-    		case "leaderboard_overall":
-    			fullLeaderboardString = ChatColor.WHITE + "\n---OVERALL TIMES---\n";
-    			break;
-    		case "leaderboard_blazerods":
-    			fullLeaderboardString = ChatColor.WHITE + "\n---BLAZE ROD TIMES---\n";
-    			break;
-    		case "leaderboard_enternether":
-    			fullLeaderboardString = ChatColor.WHITE + "\n---ENTER NETHER TIMES---\n";
-    			break;
-    		case "leaderboard_exitnether":
-    			fullLeaderboardString = ChatColor.WHITE + "\n---EXIT NETHER TIMES---\n";
-    			break;
-    		case "leaderboard_end":
-    			fullLeaderboardString = ChatColor.WHITE + "\n---ENTER END TIMES---\n";
-    			break;
-    		default:
-    			fullLeaderboardString = ChatColor.WHITE + "\n---LEADERBOARD---\n";
-    			break;
-    	}
-    	
-    	for(String placementPosition : this.getConfig().getConfigurationSection(leaderboardName).getKeys(false)) {
-    		String placementTime = this.getConfig().getString(leaderboardName + "." + placementPosition + ".time");
-    		
-    		if(placementTime != null) {
-	    		List<String> placementPlayers = this.getConfig().getStringList(leaderboardName + "." + placementPosition + ".players");
-	    		String placementPlayersString = StringUtils.join(placementPlayers, ", ");
-	    		String placementDate = this.getConfig().getString(leaderboardName + "." + placementPosition + ".date");
-	    		
-	    		if(positionToHighlight != null && positionToHighlight.equals(placementPosition)) { //if a positionToHighlight is specified, that line will be highlighted green
-	    			fullLeaderboardString += ChatColor.GREEN + placementPosition + " - " + placementTime + " - " + placementPlayersString + " - " + placementDate + ChatColor.WHITE + "\n";
-	    		}
-	    		else { //otherwise, print the line as normal
-	    			fullLeaderboardString += placementPosition + " - " + placementTime + " - " + placementPlayersString + " - " + placementDate + "\n";
-	    		}
-    		}
-    		else {
-    			fullLeaderboardString += placementPosition + " - N/A\n";
-    		}
-    	}
-    	
-    	fullLeaderboardString += "\n\n";
-    	
-    	if(calledFromCommand) {
-    		sender.sendMessage(fullLeaderboardString);
-    	}
-    	else {
-    		Bukkit.getServer().broadcastMessage(fullLeaderboardString);
-    	}
-    }
-    
-    private void printLeaderboardSql(CommandSender sender, String leaderboardName, Boolean highlightPositions) {
+    private void printLeaderboard(CommandSender sender, String leaderboardName, Boolean highlightPositions) {
     	Boolean calledFromCommand = (sender != null);
     	String fullLeaderboardString;
     	
@@ -646,29 +598,7 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 		}
     }
     
-    private void addToLeaderboardConfig(String leaderboardName, String time, Set<String> runnerNames) {
-    	String placementPosition = getPlacementPositionConfig(leaderboardName, time);
-    	
-    	for(int i=9; i>=Integer.parseInt(placementPosition); i--) { //this shifts all of the times and names down by one
-    		String tempTime = this.getConfig().getString(leaderboardName + "." + i + ".time");
-    		List<String> tempPlayers = this.getConfig().getStringList(leaderboardName + "." + i + ".players");
-    		String tempDate = this.getConfig().getString(leaderboardName + "." + i + ".date");
-    		
-    		this.getConfig().set(leaderboardName + "." + (i+1) + ".time", tempTime);
-        	this.getConfig().set(leaderboardName + "." + (i+1) + ".players", tempPlayers);
-        	this.getConfig().set(leaderboardName + "." + (i+1) + ".date", tempDate);
-    	}
-    	
-    	SimpleDateFormat dateFormatter = new SimpleDateFormat("MM/dd/yy");
-    	
-    	this.getConfig().set(leaderboardName + "." + placementPosition + ".time", time);
-    	this.getConfig().set(leaderboardName + "." + placementPosition + ".players", new ArrayList<String>(runnerNames));
-    	this.getConfig().set(leaderboardName + "." + placementPosition + ".date", dateFormatter.format(new Date()));
-    	
-    	this.saveConfig();
-    }
-    
-    private void addToLeaderboardSql(String leaderboardName, String time, Set<String> runnerNames) {
+    private void addToLeaderboard(String leaderboardName, String time, Set<String> runnerNames) {
 		java.util.Date date = new java.util.Date();
 		java.sql.Date sqlDate = new java.sql.Date(date.getTime());
 		
@@ -682,25 +612,6 @@ public class Main extends JavaPlugin implements Listener, TabCompleter {
 			e.printStackTrace();
 		}
     }
-    
-    private String getPlacementPositionConfig(String leaderboardName, String time) {
-    	String placementPosition = "";
-    	
-    	for(String positionNum : this.getConfig().getConfigurationSection(leaderboardName).getKeys(false)) {
-    		String positionTime = this.getConfig().getString(leaderboardName + "." + positionNum + ".time");
-    		
-    		if(positionTime == null || time.compareTo(positionTime) < 0) { //if time is less than the current position's time
-    			placementPosition = positionNum;
-    			break;
-    		}
-    	}
-    	
-    	leaderboardPositions.put(leaderboardName, placementPosition);
-    	
-    	return placementPosition;
-    }
-    
-    
     
     private void addSeconds(long seconds) {
     	runningSeconds += seconds;
