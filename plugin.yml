@@ -6,7 +6,7 @@ description: Timer/Stopwatch plugin for tracking time during a speedrun
 commands:
    timer:
       description: commands for Speedrun Timer plugin
-      usage: /timer [add, leaderboard, reset, start, stop, subtract, time]
+      usage: /timer [add, end, leaderboard, pause, reset, start, subtract, time]
       aliases: [speedruntimer, srt]
       permission: speedruntimer.srt
       permission-message: You don't have the speedruntimer.srt permission.

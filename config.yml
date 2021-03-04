@@ -1,4 +1,7 @@
+broadcastTimeMinutes: 10
 dbInfo:
-   username: 
-   password: 
-   dbName: 
+   username: ""
+   password: ""
+   dbName: ""
+dbUpdateRunTimeSeconds: 15
+logExecutedSQL: false
